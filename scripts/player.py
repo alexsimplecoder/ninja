@@ -40,9 +40,14 @@ class Player:
             self.x += 7
             self.state = "run"
             self.dir = "right"
-        self.x += self.vx 
+        dx = self.vx
+        if self.ml == True:
+            dx -= 7
+        if self.mr == True:
+            dx += 7
+        self.x += self.vx
         self.vx *= 0.9
-        self.collision_x(tile_size)
+        self.collision_x(tile_size, dx)
         if self.mr == False and self.ml == False and self.in_the_air == False:
             self.state = "idle"
         if self.in_the_air == True:
@@ -51,16 +56,20 @@ class Player:
             self.jumps_done = 0
         if self.in_the_air and self.colliding:
             self.state = "wall slide"
-    def collision_x(self, tile_size):
+    def collision_x(self, tile_size, dx):
         for i in self.grid_tiles:
             if self.grid_tiles[i]["solid"]:
                 hitbox = pygame.Rect(self.x, self.y, 42, 54).inflate(-20, 0)
                 tile_hitbox = pygame.Rect(i[0] * tile_size, i[1] * tile_size, tile_size, tile_size)
                 if hitbox.colliderect(tile_hitbox):
-                    if self.vx < 0 or self.ml == True:
+                    if dx < 0:
                         self.x = tile_hitbox.x + tile_size - 10
-                    elif self.vx > 0 or self.mr == True:
+                    elif dx > 0:
                         self.x = tile_hitbox.x - 32
+                    elif hitbox.centerx < tile_hitbox.centerx:
+                        self.x = tile_hitbox.x - 32
+                    else:
+                        self.x = tile_hitbox.x + tile_size - 10
                     self.colliding = True
     def collsion_y(self, tile_size):
         for i in self.grid_tiles:

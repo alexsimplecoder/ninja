@@ -35,3 +35,9 @@ class Map:
                 if self.grid_tiles[i]["variant"] == 0:
                     del self.grid_tiles[i]
                     return i[0] * self.tile_size, i[1] * self.tile_size
+    def get_enemies_coords(self):
+        for i in self.grid_tiles.copy():
+            if self.grid_tiles[i]["resource_name"] == "spawners":
+                if self.grid_tiles[i]["variant"] == 1:
+                    del self.grid_tiles[i]
+                    yield i[0] * self.tile_size, i[1] * self.tile_size

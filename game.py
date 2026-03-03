@@ -1,6 +1,6 @@
 import pygame
 import os
-from scripts import utils, animation, player, level
+from scripts import utils, animation, player, level, enemy
 
 screen = pygame.display.set_mode((1000, 800))
 ground = 800
@@ -19,6 +19,9 @@ level_map = level.Map()
 coords = level_map.get_player_coords()
 
 main_player = player.Player(coords, level_map.grid_tiles)
+enemies = []
+for coords in level_map.get_enemies_coords():
+    enemies.append(enemy.Enemy(coords[0], coords[1]))
 
 while True:
     clock.tick(FPS)
@@ -61,7 +64,8 @@ while True:
     camera_y = int(camera_y)
     main_player.render(screen, camera_x, camera_y)
     main_player.update(level_map.tile_size)
-    hitbox = pygame.Rect(main_player.x - camera_x, main_player.y - camera_y, 42, 54).inflate(-20, 0)
-    pygame.draw.rect(screen, (255, 0, 0), hitbox, 1, 4)
+    for i in enemies:
+        i.render(screen, camera_x, camera_y)
+        i.update()
     pygame.display.update()
     print(main_player.state)

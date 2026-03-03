@@ -204,14 +204,15 @@ while True:
                     "solid": solid
                 }
                 non_grid_tiles.append(tile)
-        if i.type == pygame.MOUSEBUTTONDOWN and i.button == 3:
-            x, y = pygame.mouse.get_pos()
-            x = (x + camera_x)// tile_size
-            y = (y + camera_y)// tile_size
-            if (x,y) in grid_tiles.keys():
-                del grid_tiles[(x, y)]
-            else:
-                pass
+        if i.type == pygame.KEYDOWN:
+            if i.key == pygame.K_d:
+                x, y = pygame.mouse.get_pos()
+                x = (x + camera_x)// tile_size
+                y = (y + camera_y)// tile_size
+                if (x,y) in grid_tiles.keys():
+                    del grid_tiles[(x, y)]
+        else:
+            pass
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_UP]:
         camera_y -= 5

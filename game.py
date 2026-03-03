@@ -21,7 +21,7 @@ coords = level_map.get_player_coords()
 main_player = player.Player(coords, level_map.grid_tiles)
 enemies = []
 for coords in level_map.get_enemies_coords():
-    enemies.append(enemy.Enemy(coords[0], coords[1]))
+    enemies.append(enemy.Enemy(coords[0], coords[1], level_map.grid_tiles))
 
 while True:
     clock.tick(FPS)
@@ -66,6 +66,6 @@ while True:
     main_player.update(level_map.tile_size)
     for i in enemies:
         i.render(screen, camera_x, camera_y)
-        i.update()
+        i.update(level_map.tile_size)
     pygame.display.update()
     print(main_player.state)

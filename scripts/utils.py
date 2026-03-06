@@ -14,7 +14,7 @@ def load_image(image_path, scale=None, size=None, color_key=None):
 
 def load_images(dir_path, scale=None, size=None, color_key=None):
     images = []
-    for i in os.listdir(dir_path):
+    for i in sorted(os.listdir(dir_path)):
         if i[-4:] == ".png":
             image = load_image(f"{dir_path}/{i}", scale, size, color_key)
             images.append(image)

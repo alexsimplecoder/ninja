@@ -67,5 +67,6 @@ while True:
     for i in enemies:
         i.render(screen, camera_x, camera_y)
         i.update(level_map.tile_size)
+        i.ai_move()
     pygame.display.update()
     print(main_player.state)

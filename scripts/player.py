@@ -20,6 +20,7 @@ class Player:
         }
         self.state = "idle"
         self.grid_tiles = grid_tiles
+        self.health = 100
     def render(self, screen, camera_x, camera_y):
         self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
     def update(self, tile_size):
@@ -57,6 +58,8 @@ class Player:
         if self.in_the_air and self.colliding:
             self.state = "wall slide"
     def collision_x(self, tile_size, dx):
+        self.coll_right = False
+        self.coll_left = False
         for i in self.grid_tiles:
             if self.grid_tiles[i]["solid"]:
                 hitbox = pygame.Rect(self.x, self.y, 42, 54).inflate(-20, 0)
@@ -64,8 +67,12 @@ class Player:
                 if hitbox.colliderect(tile_hitbox):
                     if dx < 0:
                         self.x = tile_hitbox.x + tile_size - 10
+                        self.coll_right = False
+                        self.coll_left = True
                     elif dx > 0:
                         self.x = tile_hitbox.x - 32
+                        self.coll_right = True
+                        self.coll_left = False
                     elif hitbox.centerx < tile_hitbox.centerx:
                         self.x = tile_hitbox.x - 32
                     else:

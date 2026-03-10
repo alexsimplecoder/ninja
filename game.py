@@ -69,4 +69,3 @@ while True:
         i.update(level_map.tile_size)
         i.ai_move()
     pygame.display.update()
-    print(main_player.state)

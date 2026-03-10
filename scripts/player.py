@@ -22,7 +22,12 @@ class Player:
         self.grid_tiles = grid_tiles
         self.health = 100
     def render(self, screen, camera_x, camera_y):
+        healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
         self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
+        pygame.draw.rect(screen, (255, 0, 0), (10, 10, 100 * 2, 20))
+        pygame.draw.rect(screen, (0, 255, 0), healh_bar)
+        pygame.draw.rect(screen, (0, 0, 0), (5, 5, 210, 30), 5)
+        self.health -= 0.1
     def update(self, tile_size):
         global jumps_done
         self.colliding = False

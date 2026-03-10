@@ -12,6 +12,8 @@ class Enemy(player.Player):
         self.health = 100
         self.ml = True
         self.timer = random.randint(120, 264)
+    def render(self, screen, camera_x, camera_y):
+        self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
     def ai_move(self):
         if self.coll_right:
             self.mr = False

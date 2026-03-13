@@ -62,6 +62,11 @@ while True:
     camera_x += ((main_player.x - 500) - camera_x) / 10
     camera_y += ((main_player.y - 400) - camera_y) / 10
     camera_y = int(camera_y)
+    if main_player.state == "dead":
+        timer = 300
+        font = pygame.font.Font(None, 200)
+        text = font.render("GAME OVER", True, (0, 0, 0))
+        screen.blit(text, (0, 0))
     main_player.render(screen, camera_x, camera_y)
     main_player.update(level_map.tile_size)
     for i in enemies:

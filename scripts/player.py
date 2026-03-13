@@ -23,7 +23,8 @@ class Player:
         self.health = 100
     def render(self, screen, camera_x, camera_y):
         healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
-        self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
+        if self.state != "dead":
+            self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
         pygame.draw.rect(screen, (255, 0, 0), (10, 10, 100 * 2, 20))
         pygame.draw.rect(screen, (0, 255, 0), healh_bar)
         pygame.draw.rect(screen, (0, 0, 0), (5, 5, 210, 30), 5)
@@ -37,7 +38,8 @@ class Player:
             self.vy += self.ay
         self.y += self.vy
         self.collsion_y(tile_size)
-        self.animations[self.state].update()
+        if self.state != "dead":
+            self.animations[self.state].update()
         if self.ml == True:
             self.x -= 7
             self.state = "run"
@@ -62,6 +64,8 @@ class Player:
             self.jumps_done = 0
         if self.in_the_air and self.colliding:
             self.state = "wall slide"
+        if self.health <= 0:
+            self.state = "dead"
     def collision_x(self, tile_size, dx):
         self.coll_right = False
         self.coll_left = False

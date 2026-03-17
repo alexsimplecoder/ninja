@@ -33,7 +33,7 @@ while True:
                 main_player.mr = True
             if i.key == pygame.K_a:
                 main_player.ml = True
-            if i.key == pygame.K_e:
+            if i.key == pygame.K_e and main_player.energy > 10:
                 main_player.state = "slide attack"
                 main_player.timer = 40
             if i.key == pygame.K_SPACE:

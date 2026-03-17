@@ -82,11 +82,17 @@ class Player:
                 self.x += 20
                 self.collision_x(tile_size, 20)
                 self.energy -= 0.75
+            else:
+                self.state = "idle"
+                self.energy = 0
         else:
             if self.energy > 10:
                 self.x -= 20
                 self.collision_x(tile_size, -20)
                 self.energy -= 0.75
+            else:  
+                self.state = "idle"
+                self.energy = 0
 
     def update(self, tile_size):
         if self.state == "slide attack":

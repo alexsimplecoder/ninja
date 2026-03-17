@@ -33,6 +33,9 @@ while True:
                 main_player.mr = True
             if i.key == pygame.K_a:
                 main_player.ml = True
+            if i.key == pygame.K_e:
+                main_player.state = "slide attack"
+                main_player.timer = 40
             if i.key == pygame.K_SPACE:
                 if main_player.state == "wall slide":
                     if main_player.dir == "right":

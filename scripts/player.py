@@ -16,20 +16,29 @@ class Player:
             "idle" : animation.Animation("graph/entities/player/idle", 3, 6),
             "run" : animation.Animation("graph/entities/player/run", 3, 6),
             "jump" : animation.Animation("graph/entities/player/jump", 3, 6),
-            "wall slide" : animation.Animation("graph/entities/player/wall_slide", 3, 6)
+            "wall slide" : animation.Animation("graph/entities/player/wall_slide", 3, 6),
+            "slide attack": animation.Animation("graph/entities/player/slide", 3, 6)
         }
         self.state = "idle"
         self.grid_tiles = grid_tiles
         self.health = 100
+        self.energy = 100
+        self.timer = 0
+    
     def render(self, screen, camera_x, camera_y):
         healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
+        energy_bar = pygame.Rect(10, 50, self.energy * 2, 20)
         if self.state != "dead":
             self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
         pygame.draw.rect(screen, (255, 0, 0), (10, 10, 100 * 2, 20))
         pygame.draw.rect(screen, (0, 255, 0), healh_bar)
         pygame.draw.rect(screen, (0, 0, 0), (5, 5, 210, 30), 5)
-        self.health -= 0.1
-    def update(self, tile_size):
+        
+        pygame.draw.rect(screen, (0, 0, 0), (10, 50, 100 * 2, 20))
+        pygame.draw.rect(screen, (45, 114, 255), energy_bar)
+        pygame.draw.rect(screen, (0, 0, 0), (5, 45, 210, 30), 5)
+    
+    def normal_update(self, tile_size):
         global jumps_done
         self.colliding = False
         if self.state == "wall slide":
@@ -66,6 +75,30 @@ class Player:
             self.state = "wall slide"
         if self.health <= 0:
             self.state = "dead"
+    
+    def attack_update(self, tile_size):
+        if self.dir == "right":
+            if self.energy > 10:
+                self.x += 20
+                self.collision_x(tile_size, 20)
+                self.energy -= 0.75
+        else:
+            if self.energy > 10:
+                self.x -= 20
+                self.collision_x(tile_size, -20)
+                self.energy -= 0.75
+
+    def update(self, tile_size):
+        if self.state == "slide attack":
+            self.attack_update(tile_size)
+            self.timer -= 1
+            if self.timer == 0:
+                self.state = "idle"
+        else:
+            self.normal_update(tile_size)
+            if self.energy < 100:
+                self.energy += 0.2
+
     def collision_x(self, tile_size, dx):
         self.coll_right = False
         self.coll_left = False
@@ -87,6 +120,7 @@ class Player:
                     else:
                         self.x = tile_hitbox.x + tile_size - 10
                     self.colliding = True
+    
     def collsion_y(self, tile_size):
         for i in self.grid_tiles:
             if self.grid_tiles[i]["solid"]:

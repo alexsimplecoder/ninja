@@ -1,8 +1,8 @@
 import pygame
 import os
-from scripts import utils, animation, player, level, enemy
-
 screen = pygame.display.set_mode((1000, 800))
+from scripts import utils, animation, player, level, enemy, projectile
+
 ground = 800
 FPS = 60
 clock = pygame.time.Clock()
@@ -73,7 +73,13 @@ while True:
     main_player.render(screen, camera_x, camera_y)
     main_player.update(level_map.tile_size)
     for i in enemies:
-        i.render(screen, camera_x, camera_y)
+        i.in_sight()
+        i.render(screen, camera_x, camera_y, (main_player.x - camera_x, main_player.y - camera_y, 30, 30))
         i.update(level_map.tile_size)
-        i.ai_move()
+        i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0), camera_x, camera_y)
+        i.in_sight()
+    for p in projectile.projectiles:
+        p.render(screen, camera_x, camera_y)
+        p.update()
+        p.if_hit(main_player, camera_x, camera_y)
     pygame.display.update()

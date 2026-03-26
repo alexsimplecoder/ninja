@@ -21,13 +21,13 @@ class Map:
         f.close()
     def render(self, screen, camera_x, camera_y):
         screen.blit(self.background, (0, 0))
-        for i in self.grid_tiles:
-            image = self.resources[self.grid_tiles[i]["resource_name"]][self.grid_tiles[i]["variant"]]
-            coords = (i[0] * self.tile_size - camera_x, i[1] * self.tile_size - int(camera_y))
+        for tile in self.grid_tiles:
+            image = self.resources[self.grid_tiles[tile]["resource_name"]][self.grid_tiles[tile]["variant"]]
+            coords = (tile[0] * self.tile_size - camera_x, tile[1] * self.tile_size - int(camera_y))
             screen.blit(image, coords)
-        for i in self.non_grid_tiles:
-            image = self.resources[i["resource_name"]][i["variant"]]
-            coords = (i["x"] - camera_x, int(i["y"] - camera_y))
+        for tile in self.non_grid_tiles:
+            image = self.resources[tile["resource_name"]][tile["variant"]]
+            coords = (tile["x"]*self.tile_size/16 - camera_x, tile["y"]*self.tile_size/16 - camera_y)
             screen.blit(image, coords)
     def get_player_coords(self):
         for i in self.grid_tiles:

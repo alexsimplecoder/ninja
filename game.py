@@ -1,7 +1,7 @@
 import pygame
 import os
 screen = pygame.display.set_mode((1000, 800))
-from scripts import utils, animation, player, level, enemy, projectile
+from scripts import utils, animation, player, level, enemy, projectile, menu
 
 ground = 800
 FPS = 60
@@ -61,7 +61,7 @@ while True:
             exit()
     if main_player.vy > 0.3:
         main_player.in_the_air = True
-    level_map.render(screen, camera_x, camera_y)
+    level_map.render(screen, camera_x, camera_y )
     camera_x += ((main_player.x - 500) - camera_x) / 10
     camera_y += ((main_player.y - 400) - camera_y) / 10
     camera_y = int(camera_y)

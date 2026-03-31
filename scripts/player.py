@@ -1,6 +1,5 @@
 from scripts import animation, physics
 import pygame
-
 class Player:
     def __init__(self, coords, grid_tiles):
         self.dir = "right"
@@ -28,8 +27,7 @@ class Player:
     def render(self, screen, camera_x, camera_y):
         healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
         energy_bar = pygame.Rect(10, 50, self.energy * 2, 20)
-        if self.state != "dead":
-            self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
+        self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
         pygame.draw.rect(screen, (255, 0, 0), (10, 10, 100 * 2, 20))
         pygame.draw.rect(screen, (0, 255, 0), healh_bar)
         pygame.draw.rect(screen, (0, 0, 0), (5, 5, 210, 30), 5)
@@ -73,8 +71,6 @@ class Player:
             self.jumps_done = 0
         if self.in_the_air and self.colliding:
             self.state = "wall slide"
-        if self.health <= 0:
-            self.state = "dead"
     
     def attack_update(self, tile_size):
         if self.dir == "right":
@@ -104,6 +100,10 @@ class Player:
             self.normal_update(tile_size)
             if self.energy < 100:
                 self.energy += 0.2
+
+    def check_for_death(self, level):
+        if self.health <= 0:
+            level.in_death_menu = True
 
     def collision_x(self, tile_size, dx):
         self.coll_right = False

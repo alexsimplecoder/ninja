@@ -27,7 +27,8 @@ while True:
     clock.tick(FPS)
     screen.fill((255, 255, 255))
     pygame.display.set_caption(str(main_player.y))
-    for i in pygame.event.get():
+    events = pygame.event.get()
+    for i in events:
         if i.type == pygame.KEYDOWN:
             if i.key == pygame.K_d:
                 main_player.mr = True
@@ -61,17 +62,13 @@ while True:
             exit()
     if main_player.vy > 0.3:
         main_player.in_the_air = True
-    level_map.render(screen, camera_x, camera_y )
+    level_map.render(screen, camera_x, camera_y, events)
     camera_x += ((main_player.x - 500) - camera_x) / 10
     camera_y += ((main_player.y - 400) - camera_y) / 10
     camera_y = int(camera_y)
-    if main_player.state == "dead":
-        timer = 300
-        font = pygame.font.Font(None, 200)
-        text = font.render("GAME OVER", True, (0, 0, 0))
-        screen.blit(text, (0, 0))
     main_player.render(screen, camera_x, camera_y)
     main_player.update(level_map.tile_size)
+    main_player.check_for_death(level_map)
     for i in enemies:
         i.in_sight()
         i.render(screen, camera_x, camera_y, (main_player.x - camera_x, main_player.y - camera_y, 30, 30))

@@ -1,4 +1,4 @@
-from scripts import animation, physics
+from scripts import animation, physics, share
 import pygame
 class Player:
     def __init__(self, coords, grid_tiles):
@@ -103,7 +103,7 @@ class Player:
 
     def check_for_death(self, level):
         if self.health <= 0:
-            level.in_death_menu = True
+            share.state = "death menu"
 
     def collision_x(self, tile_size, dx):
         self.coll_right = False

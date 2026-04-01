@@ -1,10 +1,12 @@
 import pygame
-from scripts import button
+from scripts import button, share
 
 pygame.init()
 
 def switch_to_game(level_map):
-    level_map.in_menu = False
+    share.state = "game"
+    share.player.health = 100
+    print(0)
 
 class Main_Menu:
     def __init__(self, level_map):
@@ -25,10 +27,11 @@ class Main_Menu:
 class Death_Menu(Main_Menu):
     def __init__(self, level_map):
         self.font = pygame.font.Font("Swamp Ninja.ttf", 32)
-        self.play_again_button = button.Button((350, 650, 300, 120), "Respawn", (30, 255, 57))
-        self.slot = lambda:switch_to_game(level_map)
+        self.play_again_button = button.Button((350, 650, 300, 120), "Respawn", (255, 20, 40), (30, 255, 57), self.font)
+        self.play_again_button.slot = lambda:switch_to_game(level_map)
         self.buttons:list[button.Button] = []
         self.buttons.append(self.play_again_button)
+        self.sky = (200, 20, 70)
     def render(self, screen:pygame.Surface):
         super().render(screen)
         text = self.font.render("You Have Died Warrior", True, (255, 0, 0))

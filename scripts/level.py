@@ -1,5 +1,5 @@
 import pygame, pickle
-from scripts import utils, physics, menu
+from scripts import utils, physics, menu, share
 
 class Map:
     def __init__(self):
@@ -18,15 +18,14 @@ class Map:
         self.resources["spawners"] = utils.load_images("graph/resources/spawners", self.scale, color_key=(0, 0, 0))
         self.resources["stone"] = utils.load_images("graph/resources/stone", self.scale, color_key=(0, 0, 0))
         self.background = utils.load_image("background.png", 2.2)
-        self.in_menu = True
         self.menu = menu.Main_Menu(self)
-        self.in_death_menu = False
+        self.death_menu = menu.Death_Menu(self)
         f.close()
     def render(self, screen, camera_x, camera_y, events):
-        if self.in_menu:
+        if share.state == "menu":
             self.menu.render(screen)
             self.menu.update(events)
-        else:
+        elif not share.state == "menu" and not share.state == "death menu":
             screen.blit(self.background, (0, 0))
             for tile in self.grid_tiles:
                 image = self.resources[self.grid_tiles[tile]["resource_name"]][self.grid_tiles[tile]["variant"]]
@@ -36,6 +35,9 @@ class Map:
                 image = self.resources[tile["resource_name"]][tile["variant"]]
                 coords = (tile["x"]*self.tile_size/16 - camera_x, tile["y"]*self.tile_size/16 - camera_y)
                 screen.blit(image, coords)
+        elif share.state == "death menu":
+            self.death_menu.render(screen)
+            self.death_menu.update(events)
     def get_player_coords(self):
         for i in self.grid_tiles:
             if self.grid_tiles[i]["resource_name"] == "spawners":

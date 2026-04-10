@@ -28,7 +28,7 @@ class Death_Menu(Main_Menu):
     def __init__(self, level_map):
         self.font = pygame.font.Font("Swamp Ninja.ttf", 32)
         self.play_again_button = button.Button((350, 650, 300, 120), "Respawn", (255, 20, 40), (30, 255, 57), self.font)
-        self.play_again_button.slot = lambda:switch_to_game(level_map)
+        self.play_again_button.slot = share.respawn
         self.buttons:list[button.Button] = []
         self.buttons.append(self.play_again_button)
         self.sky = (200, 20, 70)

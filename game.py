@@ -14,15 +14,33 @@ gravity = 0.3
 camera_x = 0
 camera_y = 0
 
+def respawn():
+    global main_player
+    main_player = player.Player(coords, level_map.grid_tiles)
+    share.player = main_player
+    share.state = "game"
+    print(enemy_coords)
+    enemies.clear()
+    print(enemy_coords)
+    for cds_2 in enemy_coords:
+        enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
+    projectile.projectiles.clear()
+    print(0)
+
+
+share.respawn = respawn
+
 level_map = level.Map()
 
 coords = level_map.get_player_coords()
 
+
 main_player = player.Player(coords, level_map.grid_tiles)
 share.player = main_player
 enemies = []
-for coords in level_map.get_enemies_coords():
-    enemies.append(enemy.Enemy(coords[0], coords[1], level_map.grid_tiles))
+enemy_coords = list(level_map.get_enemies_coords())
+for cds in enemy_coords:
+    enemies.append(enemy.Enemy(cds[0], cds[1], level_map.grid_tiles))
 
 while True:
     clock.tick(FPS)

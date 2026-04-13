@@ -99,7 +99,13 @@ while True:
         for p in projectile.projectiles:
             p.render(screen, camera_x, camera_y)
             p.update()
-            p.if_hit(main_player, camera_x, camera_y)
+            if p.x > main_player.x:
+                p.if_hit(main_player, camera_x, camera_y, "right")
+            else:
+                p.if_hit(main_player, camera_x, camera_y, "left")
+        for particle in projectile.particles:
+            particle.render(screen, camera_x, camera_y)
+            particle.update()
     if share.state == "menu":
         level_map.menu.render(screen)
         level_map.menu.update(events)

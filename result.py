@@ -21,7 +21,14 @@ def respawn():
     main_player = player.Player(coords, level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
+    print(enemy_coords)
+    enemies.clear()
+    print(enemy_coords)
+    for cds_2 in enemy_coords:
+        enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
+    projectile.projectiles.clear()
     print(0)
+
 
 share.respawn = respawn
 
@@ -33,7 +40,8 @@ coords = level_map.get_player_coords()
 main_player = player.Player(coords, level_map.grid_tiles)
 share.player = main_player
 enemies = []
-for cds in level_map.get_enemies_coords():
+enemy_coords = list(level_map.get_enemies_coords())
+for cds in enemy_coords:
     enemies.append(enemy.Enemy(cds[0], cds[1], level_map.grid_tiles))
 
 while True:
@@ -93,7 +101,13 @@ while True:
         for p in projectile.projectiles:
             p.render(screen, camera_x, camera_y)
             p.update()
-            p.if_hit(main_player, camera_x, camera_y)
+            if p.x > main_player.x:
+                p.if_hit(main_player, camera_x, camera_y, "right")
+            else:
+                p.if_hit(main_player, camera_x, camera_y, "left")
+        for particle in projectile.particles:
+            particle.render(screen, camera_x, camera_y)
+            particle.update()
     if share.state == "menu":
         level_map.menu.render(screen)
         level_map.menu.update(events)
@@ -760,6 +774,8 @@ class Player:
  #projectile.py
 
 import pygame
+import math
+import random
 from scripts import utils
 
 projectile = utils.load_image("graph/images/projectile.png", 3, color_key=(0, 0, 0))
@@ -775,10 +791,41 @@ class Projectile:
             self.x += 12
         else:
             self.x -= 12
-    def if_hit(self, player, camera_x, camera_y):
+    def if_hit(self, player, camera_x, camera_y, dir):
         if pygame.Rect(self.x - camera_x, self.y - camera_y, 24, 12).colliderect(pygame.Rect(player.x - camera_x, player.y - camera_y, 42, 54)):
             player.health -= 10
+            projectiles.remove(self)
+            for i in range(5):
+                particles.append(Particle((player.x + 42 - camera_x, player.y + 40 - camera_y), dir))
+
+class Particle:
+    def __init__(self, coords, dir):
+        self.x = coords[0]
+        self.y = coords[1]
+        if dir == "right":
+            self.angle = random.randint(-90, 90) * (math.pi/180)
+            self.v = 3
+            self.vx = self.v * math.cos(self.angle)
+            self.vy = self.v * math.sin(self.angle)
+        else:
+            self.angle = random.randint(90, 270) * (math.pi/180)
+            self.v = 3
+            self.vx = self.v * math.cos(self.angle)
+            self.vy = self.v * math.sin(self.angle)
+        self.timer = 210
+    def render(self, screen, camera_x, camera_y):
+        pygame.draw.circle(screen, (255, 0, 0), (self.x - camera_x, self.y - camera_y), 300)
+        print(self.x, self.y)
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.vy += 0.3
+        if self.timer == 0:
+            particles.remove(self)
+        self.timer -= 1
+
 projectiles = []
+particles = []
 
  #share.py
 

@@ -19,7 +19,7 @@ class Map:
         self.resources["stone"] = utils.load_images("graph/resources/stone", self.scale, color_key=(0, 0, 0))
         self.background = utils.load_image("background.png", 2.2)
         self.menu = menu.Main_Menu(self)
-        self.death_menu = menu.Death_Menu(self)
+        self.death_menu = menu.Death_Menu()
         f.close()
     def render(self, screen, camera_x, camera_y, events):
         if share.state == "menu":

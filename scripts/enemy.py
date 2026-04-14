@@ -16,7 +16,7 @@ class Enemy(player.Player):
         self.gun = utils.load_image("graph/images/gun.png", 3, color_key=(0, 0, 0))
         self.lgun = pygame.transform.flip(self.gun, True, False)
         self.lgun.set_colorkey((0, 0, 0))
-    def render(self, screen, camera_x, camera_y, player_hitbox):
+    def render(self, screen, camera_x, camera_y):
         self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
         self.seeing_sight.x -= camera_x 
         self.seeing_sight.y -= camera_y
@@ -24,7 +24,7 @@ class Enemy(player.Player):
             screen.blit(self.gun, (self.x + 30 - camera_x, self.y + 30 - camera_y))
         else:
             screen.blit(self.lgun, (self.x - camera_x, self.y + 30 - camera_y))
-    def ai_move(self, player_hitbox:pygame.Rect, camera_x, camera_y):
+    def ai_move(self, player_hitbox:pygame.Rect):
         if not player_hitbox.colliderect(self.seeing_sight):
             if self.coll_right:
                 self.mr = False

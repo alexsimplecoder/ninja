@@ -40,7 +40,6 @@ class Particle:
         self.timer = 210
     def render(self, screen, camera_x, camera_y):
         pygame.draw.circle(screen, (255, 0, 0), (self.x - camera_x, self.y - camera_y), 3)
-        print(self.x, self.y)
     def update(self):
         self.x += self.vx
         self.y += self.vy

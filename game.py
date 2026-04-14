@@ -58,7 +58,7 @@ while True:
                     main_player.mr = True
                 if i.key == pygame.K_a:
                     main_player.ml = True
-                if i.key == pygame.K_e and main_player.energy > 10:
+                if i.key == pygame.K_q and main_player.energy > 10:
                     main_player.state = "slide attack"
                     main_player.timer = 40
                 if i.key == pygame.K_SPACE:
@@ -92,9 +92,9 @@ while True:
         main_player.check_for_death(level_map)
         for i in enemies:
             i.in_sight()
-            i.render(screen, camera_x, camera_y, (main_player.x - camera_x, main_player.y - camera_y, 30, 30))
+            i.render(screen, camera_x, camera_y)
             i.update(level_map.tile_size)
-            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0), camera_x, camera_y)
+            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0))
             i.in_sight()
         for p in projectile.projectiles:
             p.render(screen, camera_x, camera_y)

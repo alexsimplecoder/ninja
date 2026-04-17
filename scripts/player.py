@@ -36,6 +36,10 @@ class Player:
         pygame.draw.rect(screen, (45, 114, 255), energy_bar)
         pygame.draw.rect(screen, (0, 0, 0), (5, 45, 210, 30), 5)
     
+    def get_hitbox(self):
+        hitbox = pygame.Rect(self.x, self.y, 42, 54).inflate(-20, 0)
+        return hitbox
+    
     def normal_update(self, tile_size):
         global jumps_done
         self.colliding = False
@@ -89,6 +93,7 @@ class Player:
             else:  
                 self.state = "idle"
                 self.energy = 0
+        
 
     def update(self, tile_size):
         if self.state == "slide attack":

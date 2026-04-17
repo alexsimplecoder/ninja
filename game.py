@@ -1,5 +1,7 @@
 import pygame
 import os
+import random
+import gc
 screen = pygame.display.set_mode((1000, 800))
 from scripts import utils, animation, player, level, enemy, projectile, menu, share
 
@@ -13,20 +15,28 @@ jump_limit = 2
 gravity = 0.3
 camera_x = 0
 camera_y = 0
+screen_shake_timer = 0
 
 def respawn():
     global main_player
     main_player = player.Player(coords, level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
-    print(enemy_coords)
     enemies.clear()
-    print(enemy_coords)
     for cds_2 in enemy_coords:
         enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
     projectile.projectiles.clear()
     print(0)
+    gc.collect()
 
+def attack_hit():
+    for i in enemies.copy():
+        if main_player.state == "slide attack" and main_player.get_hitbox().colliderect(i.get_hitbox()):
+            i.health -= 35
+            if i.health <= 0:
+                enemies.remove(i)
+            for j in range(13):
+                projectile.particles.append(projectile.Particle(i.get_hitbox().center, "right" if j % 2 == 0 else "left"))
 
 share.respawn = respawn
 
@@ -37,7 +47,7 @@ coords = level_map.get_player_coords()
 
 main_player = player.Player(coords, level_map.grid_tiles)
 share.player = main_player
-enemies = []
+enemies:list[enemy.Enemy] = []
 enemy_coords = list(level_map.get_enemies_coords())
 for cds in enemy_coords:
     enemies.append(enemy.Enemy(cds[0], cds[1], level_map.grid_tiles))
@@ -100,16 +110,24 @@ while True:
             p.render(screen, camera_x, camera_y)
             p.update()
             if p.x > main_player.x:
-                p.if_hit(main_player, camera_x, camera_y, "right")
+                if p.if_hit(main_player, camera_x, camera_y, "right"):
+                    screen_shake_timer = 20
             else:
-                p.if_hit(main_player, camera_x, camera_y, "left")
+                if p.if_hit(main_player, camera_x, camera_y, "left"):
+                    screen_shake_timer = 20
         for particle in projectile.particles:
             particle.render(screen, camera_x, camera_y)
             particle.update()
     if share.state == "menu":
         level_map.menu.render(screen)
         level_map.menu.update(events)
+    if screen_shake_timer > 0:
+        screen_shake_timer -= 1
+        camera_x += random.randint(-screen_shake_timer, screen_shake_timer)
+        camera_y += random.randint(-screen_shake_timer, screen_shake_timer)
     if share.state == "death menu":
         level_map.death_menu.render(screen)
         level_map.death_menu.update(events)
+    attack_hit()
+    level_map.check_for_collision()
     pygame.display.update()

@@ -1,11 +1,11 @@
 import pygame, pickle
-from scripts import utils, physics, menu, share
+from scripts import utils, physics, menu, share, projectile
 
 class Map:
     def __init__(self):
         f = open("data file", "rb")
         data = pickle.load(f)
-        self.grid_tiles = data["grid tiles"]
+        self.grid_tiles:dict = data["grid tiles"]
         self.non_grid_tiles = data["non grid tiles"]
         self.resources = {}
         self.camera_x = 0
@@ -50,3 +50,8 @@ class Map:
                 if self.grid_tiles[i]["variant"] == 1:
                     del self.grid_tiles[i]
                     yield i[0] * self.tile_size, i[1] * self.tile_size
+    def check_for_collision(self):
+        for p in projectile.projectiles.copy():
+            for tile_coords in self.grid_tiles:
+                if p.get_hitbox().colliderect(tile_coords[0]*self.tile_size, tile_coords[1]*self.tile_size, self.tile_size, self.tile_size):
+                    projectile.projectiles.remove(p)

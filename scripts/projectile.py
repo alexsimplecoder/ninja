@@ -17,11 +17,15 @@ class Projectile:
         else:
             self.x -= 12
     def if_hit(self, player, camera_x, camera_y, dir):
-        if pygame.Rect(self.x - camera_x, self.y - camera_y, 24, 12).colliderect(pygame.Rect(player.x - camera_x, player.y - camera_y, 42, 54)):
+        if self.get_hitbox().colliderect(pygame.Rect(player.x, player.y, 42, 54)):
             player.health -= 10
             projectiles.remove(self)
             for i in range(5):
                 particles.append(Particle((player.x + 42, player.y + 40), dir))
+                return True
+    def get_hitbox(self):
+        hitbox = pygame.Rect(self.x, self.y, projectile.get_width(), projectile.get_height())
+        return hitbox
 
 class Particle:
     def __init__(self, coords, dir):
@@ -48,5 +52,5 @@ class Particle:
             particles.remove(self)
         self.timer -= 1
 
-projectiles = []
+projectiles:list[Projectile] = []
 particles = []

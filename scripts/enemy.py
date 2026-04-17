@@ -47,7 +47,7 @@ class Enemy(player.Player):
             if self.gun_timer == 0:
                 p = projectile.Projectile((int(self.x) + 30 if self.dir == "right" else int(self.x), self.y + 23), self.dir)
                 projectile.projectiles.append(p)
-                self.gun_timer = random.randint(120, 300)
+                self.gun_timer = random.randint(90, 120)
             self.gun_timer -= 1
     def in_sight(self):
         if self.dir == "right":

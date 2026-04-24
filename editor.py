@@ -197,8 +197,8 @@ while True:
                     solid = True
                 x, y = pygame.mouse.get_pos()
                 tile = {
-                    "x": ((x + camera_x) - resources[resource_names[current_resource_pack]][current_resource_index].get_width()/2),
-                    "y": ((y + camera_y) - resources[resource_names[current_resource_pack]][current_resource_index].get_height()/2),
+                    "x": ((x + camera_x) - resources[resource_names[current_resource_pack]][current_resource_index].get_width()/2) * 16 / tile_size,
+                    "y": ((y + camera_y) - resources[resource_names[current_resource_pack]][current_resource_index].get_height()/2) * 16 / tile_size,
                     "resource_name": resource_names[current_resource_pack],
                     "variant": current_resource_index,
                     "solid": solid,
@@ -212,11 +212,18 @@ while True:
                 if (x,y) in grid_tiles.keys():
                     del grid_tiles[(x, y)]
             else:
-                x, y = pygame.mouse.get_pos()
-                for tile in non_grid_tiles:
-                    hitbox = pygame.Rect(tile["x"], tile["y"], resources[tile["resource_name"]][tile["variant"]].get_width(), resources[tile["resource_name"]][tile["variant"]].get_height())
-                    if hitbox.collidepoint(x, y):
-                        non_grid_tiles.remove(tile)
+                for index in range(len(non_grid_tiles) - 1, -1, -1):
+                    tile = non_grid_tiles[index]
+                    image = resources[tile["resource_name"]][tile["variant"]]
+                
+                    tx = (tile["x"] * tile_size / 16) - camera_x
+                    ty = (tile["y"] * tile_size / 16) - camera_y
+                
+                    tile_rect = pygame.Rect(tx, ty, image.get_width(), image.get_height())
+                
+                    if tile_rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
+                        non_grid_tiles.pop(index)
+                        break
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_UP]:
         camera_y -= 5
@@ -226,6 +233,9 @@ while True:
         camera_x -= 5
     if pressed[pygame.K_DOWN]:
         camera_y += 5
+    for tile in non_grid_tiles:
+        hitbox = pygame.Rect(tile["x"], tile["y"], resources[tile["resource_name"]][tile["variant"]].get_width(), resources[tile["resource_name"]][tile["variant"]].get_height())
+        pygame.draw.rect(screen, (255, 0, 0), hitbox, 5)
     # if pressed[pygame.K_LSHIFT]:
     #     for i in events:
     #         if i.type == pygame.MOUSEBUTTONDOWN and i.button == 1:

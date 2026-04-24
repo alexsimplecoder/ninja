@@ -3,7 +3,7 @@ import os
 
 pygame.init()
 def load_image(image_path, scale=None, size=None, color_key=None):
-    image = pygame.image.load(image_path).convert_alpha()
+    image = pygame.image.load(image_path).convert()
     if size == None:
         scaled_image = pygame.transform.scale(image, (image.get_width() * scale, image.get_height() * scale))
     else:

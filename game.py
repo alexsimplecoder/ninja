@@ -16,9 +16,16 @@ gravity = 0.3
 camera_x = 0
 camera_y = 0
 screen_shake_timer = 0
+small_figure = utils.load_image("graph/entities/enemy/idle/00.png", 1.12, color_key=(0, 0, 0))
+level_num = 0
 
 def respawn():
     global main_player
+    global level_num
+    global level_map
+    if len(enemies) == 0:
+        level_num += 1
+    level_map = level.Map(level_num)
     main_player = player.Player(coords, level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
@@ -40,7 +47,7 @@ def attack_hit():
 
 share.respawn = respawn
 
-level_map = level.Map()
+level_map = level.Map(level_num)
 
 coords = level_map.get_player_coords()
 
@@ -104,7 +111,7 @@ while True:
             i.in_sight()
             i.render(screen, camera_x, camera_y)
             i.update(level_map.tile_size)
-            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0))
+            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0), level_map)
             i.in_sight()
         for p in projectile.projectiles:
             p.render(screen, camera_x, camera_y)
@@ -115,6 +122,8 @@ while True:
             else:
                 if p.if_hit(main_player, camera_x, camera_y, "left"):
                     screen_shake_timer = 20
+        for i in range(len(enemies)):
+            screen.blit(small_figure, (900 + i*20, 50))
         for particle in projectile.particles:
             particle.render(screen, camera_x, camera_y)
             particle.update()
@@ -128,6 +137,8 @@ while True:
     if share.state == "death menu":
         level_map.death_menu.render(screen)
         level_map.death_menu.update(events)
+    if len(enemies) == 0:
+        respawn() 
     attack_hit()
     level_map.check_for_collision()
     pygame.display.update()

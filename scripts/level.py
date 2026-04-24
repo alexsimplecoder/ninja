@@ -2,8 +2,8 @@ import pygame, pickle
 from scripts import utils, physics, menu, share, projectile
 
 class Map:
-    def __init__(self):
-        f = open("data file", "rb")
+    def __init__(self, level_num):
+        f = open(f"level {level_num}", "rb")
         data = pickle.load(f)
         self.grid_tiles:dict = data["grid tiles"]
         self.non_grid_tiles = data["non grid tiles"]
@@ -55,3 +55,11 @@ class Map:
             for tile_coords in self.grid_tiles:
                 if p.get_hitbox().colliderect(tile_coords[0]*self.tile_size, tile_coords[1]*self.tile_size, self.tile_size, self.tile_size):
                     projectile.projectiles.remove(p)
+    def check_for_fall(self, foot_x, foot_y, dir):
+        if dir == "right":
+            if ((foot_x + 20) // self.tile_size, foot_y // self.tile_size) in self.grid_tiles:
+                return False
+        else:
+            if ((foot_x - 20) // self.tile_size, foot_y // self.tile_size) in self.grid_tiles:
+                return False
+        return True

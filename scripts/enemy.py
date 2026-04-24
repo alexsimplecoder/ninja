@@ -24,7 +24,7 @@ class Enemy(player.Player):
             screen.blit(self.gun, (self.x + 30 - camera_x, self.y + 30 - camera_y))
         else:
             screen.blit(self.lgun, (self.x - camera_x, self.y + 30 - camera_y))
-    def ai_move(self, player_hitbox:pygame.Rect):
+    def ai_move(self, player_hitbox:pygame.Rect, level):
         if not player_hitbox.colliderect(self.seeing_sight):
             if self.coll_right:
                 self.mr = False
@@ -49,6 +49,13 @@ class Enemy(player.Player):
                 projectile.projectiles.append(p)
                 self.gun_timer = random.randint(90, 120)
             self.gun_timer -= 1
+        if level.check_for_fall(self.get_hitbox().midbottom[0], self.get_hitbox().midbottom[1], self.dir):
+            if self.dir == "right":
+                self.ml = True
+                self.mr = False
+            else:
+                self.mr = True
+                self.ml = False
     def in_sight(self):
         if self.dir == "right":
             self.seeing_sight = pygame.Rect(self.x + 30, self.y - 200, 500, 300)

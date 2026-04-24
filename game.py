@@ -26,11 +26,11 @@ def respawn():
     if len(enemies) == 0:
         level_num += 1
     level_map = level.Map(level_num)
-    main_player = player.Player(coords, level_map.grid_tiles)
+    main_player = player.Player(level_map.get_player_coords(), level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
     enemies.clear()
-    for cds_2 in enemy_coords:
+    for cds_2 in level_map.get_enemies_coords():
         enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
     projectile.projectiles.clear()
     print(0)

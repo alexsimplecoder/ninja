@@ -23,6 +23,7 @@ class Player:
         self.health = 100
         self.energy = 100
         self.timer = 0
+        self.time_in_air = 0
     
     def render(self, screen, camera_x, camera_y):
         healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
@@ -71,10 +72,16 @@ class Player:
             self.state = "idle"
         if self.in_the_air == True:
             self.state = "jump"
+            self.time_in_air += 1
         if self.in_the_air == False:
             self.jumps_done = 0
+            self.time_in_air = 0
         if self.in_the_air and self.colliding:
             self.state = "wall slide"
+            self.time_in_air = 0
+        if self.time_in_air > 300:
+            self.health = 0
+
     
     def attack_update(self, tile_size):
         if self.dir == "right":
@@ -93,6 +100,7 @@ class Player:
             else:  
                 self.state = "idle"
                 self.energy = 0
+        self.time_in_air = 0
         
 
     def update(self, tile_size):

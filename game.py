@@ -3,8 +3,11 @@ import os
 import random
 import gc
 screen = pygame.display.set_mode((1000, 800))
+dark_screen = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 from scripts import utils, animation, player, level, enemy, projectile, menu, share
 
+compress_timer = 0
+expend_timer = 40
 ground = 800
 FPS = 60
 clock = pygame.time.Clock()
@@ -23,6 +26,7 @@ def respawn():
     global main_player
     global level_num
     global level_map
+    global expend_timer
     if len(enemies) == 0:
         level_num += 1
     level_map = level.Map(level_num)
@@ -33,7 +37,7 @@ def respawn():
     for cds_2 in level_map.get_enemies_coords():
         enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
     projectile.projectiles.clear()
-    print(0)
+    expend_timer = 40
     gc.collect()
 
 def attack_hit():
@@ -141,4 +145,8 @@ while True:
         respawn() 
     attack_hit()
     level_map.check_for_collision()
+    if expend_timer > 0:
+        expend_timer -= 1
+        dark_screen.fill((0, 0, 0, 255))
+        pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (-15 * expend_timer + 600))
     pygame.display.update()

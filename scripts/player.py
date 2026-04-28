@@ -117,6 +117,7 @@ class Player:
     def check_for_death(self, level):
         if self.health <= 0:
             share.state = "death menu"
+            
 
     def collision_x(self, tile_size, dx):
         self.coll_right = False

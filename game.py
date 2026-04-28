@@ -8,6 +8,7 @@ from scripts import utils, animation, player, level, enemy, projectile, menu, sh
 
 compress_timer = 0
 expend_timer = 40
+collaps_timer = 0
 ground = 800
 FPS = 60
 clock = pygame.time.Clock()
@@ -141,12 +142,20 @@ while True:
     if share.state == "death menu":
         level_map.death_menu.render(screen)
         level_map.death_menu.update(events)
-    if len(enemies) == 0:
-        respawn() 
+    if len(enemies) == 0 and collaps_timer == 0:
+        collaps_timer = 40
     attack_hit()
     level_map.check_for_collision()
     if expend_timer > 0:
         expend_timer -= 1
         dark_screen.fill((0, 0, 0, 255))
         pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (-15 * expend_timer + 600))
+        screen.blit(dark_screen, (0, 0))
+    if collaps_timer > 0:
+        collaps_timer -= 1
+        dark_screen.fill((0, 0, 0, 255))
+        pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (collaps_timer * 15))
+        screen.blit(dark_screen, (0, 0))
+        if collaps_timer == 0:
+            respawn()
     pygame.display.update()

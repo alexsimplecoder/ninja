@@ -1,5 +1,5 @@
-from scripts import animation, physics, share
-import pygame
+from scripts import animation, physics, share, projectile
+import pygame, random
 class Player:
     def __init__(self, coords, grid_tiles):
         self.dir = "right"
@@ -76,7 +76,7 @@ class Player:
         if self.in_the_air == False:
             self.jumps_done = 0
             self.time_in_air = 0
-        if self.in_the_air and self.colliding:
+        if (self.in_the_air and self.colliding) and ((self.dir == "right" and self.coll_right) or (self.dir == "left" and self.coll_left)):
             self.state = "wall slide"
             self.time_in_air = 0
         if self.time_in_air > 300:
@@ -109,6 +109,8 @@ class Player:
             self.timer -= 1
             if self.timer == 0:
                 self.state = "idle"
+            for i in range(random.randint(1, 3)):
+                projectile.particles.append(projectile.Particle((self.x - 8, self.y + 40) if self.dir == "right" else (self.x + 40, self.y + 40), "left" if self.dir == "right" else "right", (120, 120, 255)))
         else:
             self.normal_update(tile_size)
             if self.energy < 100:

@@ -2,9 +2,16 @@ import pygame
 import os
 import random
 import gc
+pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((1000, 800))
 dark_screen = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 from scripts import utils, animation, player, level, enemy, projectile, menu, share
+
+pygame.mixer.music.load("sounds/ambience.wav")
+pygame.mixer.music.play(-1)
+jump_sound = pygame.mixer.Sound("sounds/jump.wav")
+jump_sound.set_volume(1)
 
 compress_timer = 0
 expend_timer = 40
@@ -80,7 +87,7 @@ while True:
                     main_player.mr = True
                 if i.key == pygame.K_a:
                     main_player.ml = True
-                if i.key == pygame.K_q and main_player.energy > 10:
+                if i.key == pygame.K_e and main_player.energy > 10:
                     main_player.state = "slide attack"
                     main_player.timer = 40
                 if i.key == pygame.K_SPACE:
@@ -98,6 +105,7 @@ while True:
                             main_player.vy = -10
                             main_player.in_the_air = True
                             main_player.jumps_done += 1
+                            jump_sound.play()
             if i.type == pygame.KEYUP:
                 if i.key == pygame.K_d:
                     main_player.mr = False
@@ -146,7 +154,7 @@ while True:
         collaps_timer = 40
     attack_hit()
     level_map.check_for_collision()
-    if expend_timer > 0:
+    if expend_timer > 0 and share.state == "game":
         expend_timer -= 1
         dark_screen.fill((0, 0, 0, 255))
         pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (-15 * expend_timer + 600))

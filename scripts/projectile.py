@@ -28,9 +28,10 @@ class Projectile:
         return hitbox
 
 class Particle:
-    def __init__(self, coords, dir):
+    def __init__(self, coords, dir, color="red"):
         self.x = coords[0]
         self.y = coords[1]
+        self.color = color
         if dir == "right":
             self.angle = random.randint(-90, 90) * (math.pi/180)
             self.v = 3
@@ -43,7 +44,7 @@ class Particle:
             self.vy = self.v * math.sin(self.angle)
         self.timer = 210
     def render(self, screen, camera_x, camera_y):
-        pygame.draw.circle(screen, (255, 0, 0), (self.x - camera_x, self.y - camera_y), 3)
+        pygame.draw.circle(screen, self.color, (self.x - camera_x, self.y - camera_y), 3)
     def update(self):
         self.x += self.vx
         self.y += self.vy

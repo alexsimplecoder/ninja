@@ -28,16 +28,19 @@ camera_x = 0
 camera_y = 0
 screen_shake_timer = 0
 small_figure = utils.load_image("graph/entities/enemy/idle/00.png", 1.12, color_key=(0, 0, 0))
-level_num = 0
+share.level_num = 0
+level_choosing_menu = menu.Level_Choosing_Menu()
+
+def switch_to_levels():
+    share.state = "level choosing"
 
 def respawn():
     global main_player
-    global level_num
     global level_map
     global expend_timer
     if len(enemies) == 0:
-        level_num += 1
-    level_map = level.Map(level_num)
+        share.level_num += 1
+    level_map = level.Map(share.level_num)
     main_player = player.Player(level_map.get_player_coords(), level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
@@ -59,7 +62,9 @@ def attack_hit():
 
 share.respawn = respawn
 
-level_map = level.Map(level_num)
+share.switch_to_lvl = switch_to_levels
+
+level_map = level.Map(share.level_num)
 
 coords = level_map.get_player_coords()
 
@@ -87,7 +92,7 @@ while True:
                     main_player.mr = True
                 if i.key == pygame.K_a:
                     main_player.ml = True
-                if i.key == pygame.K_e and main_player.energy > 10:
+                if i.key == pygame.K_q and main_player.energy > 10:
                     main_player.state = "slide attack"
                     main_player.timer = 40
                 if i.key == pygame.K_SPACE:
@@ -166,4 +171,7 @@ while True:
         screen.blit(dark_screen, (0, 0))
         if collaps_timer == 0:
             respawn()
+    if share.state == "level choosing":
+        level_choosing_menu.render(screen)
+        level_choosing_menu.update(events)
     pygame.display.update()

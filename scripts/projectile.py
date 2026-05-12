@@ -3,6 +3,11 @@ import math
 import random
 from scripts import utils
 
+pygame.mixer.music.load("sounds/hit.wav")
+pygame.mixer.music.play(-1)
+hit_sound = pygame.mixer.Sound("sounds/hit.wav")
+hit_sound.set_volume(1)
+
 projectile = utils.load_image("graph/images/projectile.png", 3, color_key=(0, 0, 0))
 class Projectile:
     def __init__(self, coords, dir):
@@ -16,13 +21,15 @@ class Projectile:
             self.x += 12
         else:
             self.x -= 12
-    def if_hit(self, player, camera_x, camera_y, dir):
+    def if_hit(self, player, dir):
         if self.get_hitbox().colliderect(pygame.Rect(player.x, player.y, 42, 54)):
             player.health -= 10
             projectiles.remove(self)
+            hit_sound.play()
             for i in range(5):
                 particles.append(Particle((player.x + 42, player.y + 40), dir))
                 return True
+
     def get_hitbox(self):
         hitbox = pygame.Rect(self.x, self.y, projectile.get_width(), projectile.get_height())
         return hitbox

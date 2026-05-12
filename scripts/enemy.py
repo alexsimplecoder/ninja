@@ -1,6 +1,12 @@
 import pygame
 import random
 from scripts import animation, player, utils, projectile
+
+pygame.mixer.music.load("sounds/shoot.wav")
+pygame.mixer.music.play(-1)
+shoot_sound = pygame.mixer.Sound("sounds/shoot.wav")
+shoot_sound.set_volume(1)
+
 class Enemy(player.Player):
     def __init__(self, x, y, grid_tiles):
         super().__init__((x, y), grid_tiles)
@@ -48,6 +54,7 @@ class Enemy(player.Player):
                 p = projectile.Projectile((int(self.x) + 30 if self.dir == "right" else int(self.x), self.y + 23), self.dir)
                 projectile.projectiles.append(p)
                 self.gun_timer = random.randint(90, 120)
+                shoot_sound.play()
             self.gun_timer -= 1
         if level.check_for_fall(self.get_hitbox().midbottom[0], self.get_hitbox().midbottom[1], self.dir):
             if self.dir == "right":

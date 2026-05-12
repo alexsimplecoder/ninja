@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import gc
+import pickle
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((1000, 800))
@@ -12,6 +13,9 @@ pygame.mixer.music.load("sounds/ambience.wav")
 pygame.mixer.music.play(-1)
 jump_sound = pygame.mixer.Sound("sounds/jump.wav")
 jump_sound.set_volume(1)
+
+dash_sound = pygame.mixer.Sound("sounds/dash.wav")
+dash_sound.set_volume(1)
 
 compress_timer = 0
 expend_timer = 40
@@ -34,6 +38,19 @@ level_choosing_menu = menu.Level_Choosing_Menu()
 def switch_to_levels():
     share.state = "level choosing"
 
+def save():
+    f = open("progress.save", "wb")
+    pickle.dump(share.level_num, f)
+    f.close()
+
+def load():
+    try:
+        with open("progress.save", "rb") as f:
+            share.level_num = pickle.load(f)
+    except:
+        print("data not loaded")
+
+load()
 def respawn():
     global main_player
     global level_map
@@ -84,6 +101,7 @@ while True:
     for i in events:
         if i.type == pygame.QUIT:
             pygame.quit()
+            save()
             exit()
     if share.state == "game":
         for i in events:
@@ -95,6 +113,7 @@ while True:
                 if i.key == pygame.K_q and main_player.energy > 10:
                     main_player.state = "slide attack"
                     main_player.timer = 40
+                    dash_sound.play()
                 if i.key == pygame.K_SPACE:
                     if main_player.state == "wall slide":
                         if main_player.dir == "right":
@@ -135,10 +154,10 @@ while True:
             p.render(screen, camera_x, camera_y)
             p.update()
             if p.x > main_player.x:
-                if p.if_hit(main_player, camera_x, camera_y, "right"):
+                if p.if_hit(main_player, "right"):
                     screen_shake_timer = 20
             else:
-                if p.if_hit(main_player, camera_x, camera_y, "left"):
+                if p.if_hit(main_player, "left"):
                     screen_shake_timer = 20
         for i in range(len(enemies)):
             screen.blit(small_figure, (900 + i*20, 50))

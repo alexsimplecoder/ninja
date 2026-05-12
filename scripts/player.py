@@ -1,5 +1,8 @@
 from scripts import animation, physics, share, projectile
 import pygame, random
+
+
+
 class Player:
     def __init__(self, coords, grid_tiles):
         self.dir = "right"
@@ -142,6 +145,8 @@ class Player:
                     else:
                         self.x = tile_hitbox.x + tile_size - 10
                     self.colliding = True
+                    if self.state == "slide attack":
+                        self.timer = 1
     
     def collsion_y(self, tile_size):
         for i in self.grid_tiles:

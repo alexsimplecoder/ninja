@@ -33,7 +33,6 @@ camera_y = 0
 screen_shake_timer = 0
 small_figure = utils.load_image("graph/entities/enemy/idle/00.png", 1.12, color_key=(0, 0, 0))
 share.level_num = 0
-level_choosing_menu = menu.Level_Choosing_Menu()
 
 def switch_to_levels():
     share.state = "level choosing"
@@ -191,6 +190,7 @@ while True:
         if collaps_timer == 0:
             respawn()
     if share.state == "level choosing":
+        level_choosing_menu = menu.Level_Choosing_Menu()
         level_choosing_menu.render(screen)
         level_choosing_menu.update(events)
     pygame.display.update()

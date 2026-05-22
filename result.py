@@ -2,9 +2,26 @@
 
 import pygame
 import os
+import random
+import gc
+import pickle
+pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((1000, 800))
+dark_screen = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 from scripts import utils, animation, player, level, enemy, projectile, menu, share
 
+pygame.mixer.music.load("sounds/ambience.wav")
+pygame.mixer.music.play(-1)
+jump_sound = pygame.mixer.Sound("sounds/jump.wav")
+jump_sound.set_volume(1)
+
+dash_sound = pygame.mixer.Sound("sounds/dash.wav")
+dash_sound.set_volume(1)
+
+compress_timer = 0
+expend_timer = 40
+collaps_timer = 0
 ground = 800
 FPS = 60
 clock = pygame.time.Clock()
@@ -15,31 +32,68 @@ jump_limit = 2
 gravity = 0.3
 camera_x = 0
 camera_y = 0
+screen_shake_timer = 0
+small_figure = utils.load_image("graph/entities/enemy/idle/00.png", 1.12, color_key=(0, 0, 0))
+share.unlocked_levels = 1
+share.level_num = 0
 
+def switch_to_levels():
+    share.state = "level choosing"
+
+def save():
+    f = open("progress.save", "wb")
+    pickle.dump([share.level_num, share.unlocked_levels], f)
+    f.close()
+
+def load():
+    try:
+        with open("progress.save", "rb") as f:
+            share.level_num, share.unlocked_levels = pickle.load(f)
+    except:
+        print("data not loaded")
+
+load()
 def respawn():
     global main_player
-    main_player = player.Player(coords, level_map.grid_tiles)
+    global level_map
+    global expend_timer
+    if len(enemies) == 0:
+        share.level_num += 1
+    print(share.level_num, share.unlocked_levels)
+    if len(enemies) == 0 and share.level_num == share.unlocked_levels:
+        share.unlocked_levels += 1
+    level_map = level.Map(share.level_num)
+    main_player = player.Player(level_map.get_player_coords(), level_map.grid_tiles)
     share.player = main_player
     share.state = "game"
-    print(enemy_coords)
     enemies.clear()
-    print(enemy_coords)
-    for cds_2 in enemy_coords:
+    for cds_2 in level_map.get_enemies_coords():
         enemies.append(enemy.Enemy(cds_2[0], cds_2[1], level_map.grid_tiles))
     projectile.projectiles.clear()
-    print(0)
+    expend_timer = 40
+    gc.collect()
 
+def attack_hit():
+    for i in enemies.copy():
+        if main_player.state == "slide attack" and main_player.get_hitbox().colliderect(i.get_hitbox()):
+            i.health -= 35
+            if i.health <= 0:
+                enemies.remove(i)
+            for j in range(13):
+                projectile.particles.append(projectile.Particle(i.get_hitbox().center, "right" if j % 2 == 0 else "left"))
 
 share.respawn = respawn
 
-level_map = level.Map()
+share.switch_to_lvl = switch_to_levels
+
+level_map = level.Map(share.level_num)
 
 coords = level_map.get_player_coords()
 
 
 main_player = player.Player(coords, level_map.grid_tiles)
 share.player = main_player
-enemies = []
+enemies:list[enemy.Enemy] = []
 enemy_coords = list(level_map.get_enemies_coords())
 for cds in enemy_coords:
     enemies.append(enemy.Enemy(cds[0], cds[1], level_map.grid_tiles))
@@ -52,6 +106,7 @@ while True:
     for i in events:
         if i.type == pygame.QUIT:
             pygame.quit()
+            save()
             exit()
     if share.state == "game":
         for i in events:
@@ -60,9 +115,12 @@ while True:
                     main_player.mr = True
                 if i.key == pygame.K_a:
                     main_player.ml = True
-                if i.key == pygame.K_e and main_player.energy > 10:
+                if i.key == pygame.K_q and main_player.energy > 10:
                     main_player.state = "slide attack"
                     main_player.timer = 40
+                    dash_sound.play()
+                if i.key == pygame.K_r:
+                    enemies = []
                 if i.key == pygame.K_SPACE:
                     if main_player.state == "wall slide":
                         if main_player.dir == "right":
@@ -78,6 +136,7 @@ while True:
                             main_player.vy = -10
                             main_player.in_the_air = True
                             main_player.jumps_done += 1
+                            jump_sound.play()
             if i.type == pygame.KEYUP:
                 if i.key == pygame.K_d:
                     main_player.mr = False
@@ -94,26 +153,54 @@ while True:
         main_player.check_for_death(level_map)
         for i in enemies:
             i.in_sight()
-            i.render(screen, camera_x, camera_y, (main_player.x - camera_x, main_player.y - camera_y, 30, 30))
+            i.render(screen, camera_x, camera_y)
             i.update(level_map.tile_size)
-            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0), camera_x, camera_y)
+            i.ai_move(pygame.Rect(main_player.x - camera_x, main_player.y- camera_y, 42, 54).inflate(-20, 0), level_map)
             i.in_sight()
         for p in projectile.projectiles:
             p.render(screen, camera_x, camera_y)
             p.update()
             if p.x > main_player.x:
-                p.if_hit(main_player, camera_x, camera_y, "right")
+                if p.if_hit(main_player, "right"):
+                    screen_shake_timer = 20
             else:
-                p.if_hit(main_player, camera_x, camera_y, "left")
+                if p.if_hit(main_player, "left"):
+                    screen_shake_timer = 20
+        for i in range(len(enemies)):
+            screen.blit(small_figure, (900 + i*20, 50))
         for particle in projectile.particles:
             particle.render(screen, camera_x, camera_y)
             particle.update()
     if share.state == "menu":
         level_map.menu.render(screen)
         level_map.menu.update(events)
+    if screen_shake_timer > 0:
+        screen_shake_timer -= 1
+        camera_x += random.randint(-screen_shake_timer, screen_shake_timer)
+        camera_y += random.randint(-screen_shake_timer, screen_shake_timer)
     if share.state == "death menu":
         level_map.death_menu.render(screen)
         level_map.death_menu.update(events)
+    if len(enemies) == 0 and collaps_timer == 0:
+        collaps_timer = 40
+    attack_hit()
+    level_map.check_for_collision()
+    if expend_timer > 0 and share.state == "game":
+        expend_timer -= 1
+        dark_screen.fill((0, 0, 0, 255))
+        pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (-15 * expend_timer + 600))
+        screen.blit(dark_screen, (0, 0))
+    if collaps_timer > 0:
+        collaps_timer -= 1
+        dark_screen.fill((0, 0, 0, 255))
+        pygame.draw.circle(dark_screen, (255, 255, 255, 0), (500, 400), (collaps_timer * 15))
+        screen.blit(dark_screen, (0, 0))
+        if collaps_timer == 0:
+            respawn()
+    if share.state == "level choosing":
+        level_choosing_menu = menu.Level_Choosing_Menu()
+        level_choosing_menu.render(screen)
+        level_choosing_menu.update(events)
     pygame.display.update()
 
  #editor.py
@@ -317,8 +404,8 @@ while True:
                     solid = True
                 x, y = pygame.mouse.get_pos()
                 tile = {
-                    "x": ((x + camera_x) - resources[resource_names[current_resource_pack]][current_resource_index].get_width()/2),
-                    "y": ((y + camera_y) - resources[resource_names[current_resource_pack]][current_resource_index].get_height()/2),
+                    "x": ((x + camera_x) - resources[resource_names[current_resource_pack]][current_resource_index].get_width()/2) * 16 / tile_size,
+                    "y": ((y + camera_y) - resources[resource_names[current_resource_pack]][current_resource_index].get_height()/2) * 16 / tile_size,
                     "resource_name": resource_names[current_resource_pack],
                     "variant": current_resource_index,
                     "solid": solid,
@@ -332,11 +419,18 @@ while True:
                 if (x,y) in grid_tiles.keys():
                     del grid_tiles[(x, y)]
             else:
-                x, y = pygame.mouse.get_pos()
-                for tile in non_grid_tiles:
-                    hitbox = pygame.Rect(tile["x"], tile["y"], resources[tile["resource_name"]][tile["variant"]].get_width(), resources[tile["resource_name"]][tile["variant"]].get_height())
-                    if hitbox.collidepoint(x, y):
-                        non_grid_tiles.remove(tile)
+                for index in range(len(non_grid_tiles) - 1, -1, -1):
+                    tile = non_grid_tiles[index]
+                    image = resources[tile["resource_name"]][tile["variant"]]
+                
+                    tx = (tile["x"] * tile_size / 16) - camera_x
+                    ty = (tile["y"] * tile_size / 16) - camera_y
+                
+                    tile_rect = pygame.Rect(tx, ty, image.get_width(), image.get_height())
+                
+                    if tile_rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
+                        non_grid_tiles.pop(index)
+                        break
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_UP]:
         camera_y -= 5
@@ -346,6 +440,9 @@ while True:
         camera_x -= 5
     if pressed[pygame.K_DOWN]:
         camera_y += 5
+    for tile in non_grid_tiles:
+        hitbox = pygame.Rect(tile["x"], tile["y"], resources[tile["resource_name"]][tile["variant"]].get_width(), resources[tile["resource_name"]][tile["variant"]].get_height())
+        pygame.draw.rect(screen, (255, 0, 0), hitbox, 5)
     # if pressed[pygame.K_LSHIFT]:
     #     for i in events:
     #         if i.type == pygame.MOUSEBUTTONDOWN and i.button == 1:
@@ -410,14 +507,14 @@ pygame.init()
 class Button:
     def __init__(self, rect_base, text, text_color, button_color, font):
         self.coords = (rect_base[0], rect_base[1])
-        self.text = font.render(text, False, text_color)
+        self.text:pygame.Surface = font.render(text, False, text_color)
         self.color = button_color
         self.rect_base = rect_base
         self.slot = None
         self.hitbox = pygame.Rect(rect_base)
     def render(self, screen):
         pygame.draw.rect(screen, self.color, self.rect_base)
-        screen.blit(self.text, (self.coords[0] + self.rect_base[2]/2, self.coords[1] + self.rect_base[3]/2))
+        screen.blit(self.text, (self.coords[0] + (self.rect_base[2] - self.text.get_width()) / 2, self.coords[1] + (self.rect_base[3] - self.text.get_height()) / 2))
     def update(self, events):
         coords = pygame.mouse.get_pos()
         for i in events:
@@ -430,6 +527,12 @@ class Button:
 import pygame
 import random
 from scripts import animation, player, utils, projectile
+
+pygame.mixer.music.load("sounds/shoot.wav")
+pygame.mixer.music.play(-1)
+shoot_sound = pygame.mixer.Sound("sounds/shoot.wav")
+shoot_sound.set_volume(1)
+
 class Enemy(player.Player):
     def __init__(self, x, y, grid_tiles):
         super().__init__((x, y), grid_tiles)
@@ -445,7 +548,7 @@ class Enemy(player.Player):
         self.gun = utils.load_image("graph/images/gun.png", 3, color_key=(0, 0, 0))
         self.lgun = pygame.transform.flip(self.gun, True, False)
         self.lgun.set_colorkey((0, 0, 0))
-    def render(self, screen, camera_x, camera_y, player_hitbox):
+    def render(self, screen, camera_x, camera_y):
         self.animations[self.state].render((self.x - camera_x, int(self.y - camera_y)), f"{self.dir}", screen)
         self.seeing_sight.x -= camera_x 
         self.seeing_sight.y -= camera_y
@@ -453,7 +556,7 @@ class Enemy(player.Player):
             screen.blit(self.gun, (self.x + 30 - camera_x, self.y + 30 - camera_y))
         else:
             screen.blit(self.lgun, (self.x - camera_x, self.y + 30 - camera_y))
-    def ai_move(self, player_hitbox:pygame.Rect, camera_x, camera_y):
+    def ai_move(self, player_hitbox:pygame.Rect, level):
         if not player_hitbox.colliderect(self.seeing_sight):
             if self.coll_right:
                 self.mr = False
@@ -476,8 +579,16 @@ class Enemy(player.Player):
             if self.gun_timer == 0:
                 p = projectile.Projectile((int(self.x) + 30 if self.dir == "right" else int(self.x), self.y + 23), self.dir)
                 projectile.projectiles.append(p)
-                self.gun_timer = random.randint(120, 300)
+                self.gun_timer = random.randint(90, 120)
+                shoot_sound.play()
             self.gun_timer -= 1
+        if level.check_for_fall(self.get_hitbox().midbottom[0], self.get_hitbox().midbottom[1], self.dir):
+            if self.dir == "right":
+                self.ml = True
+                self.mr = False
+            else:
+                self.mr = True
+                self.ml = False
     def in_sight(self):
         if self.dir == "right":
             self.seeing_sight = pygame.Rect(self.x + 30, self.y - 200, 500, 300)
@@ -488,13 +599,13 @@ class Enemy(player.Player):
  #level.py
 
 import pygame, pickle
-from scripts import utils, physics, menu, share
+from scripts import utils, physics, menu, share, projectile
 
 class Map:
-    def __init__(self):
-        f = open("data file", "rb")
+    def __init__(self, level_num):
+        f = open(f"level {level_num}", "rb")
         data = pickle.load(f)
-        self.grid_tiles = data["grid tiles"]
+        self.grid_tiles:dict = data["grid tiles"]
         self.non_grid_tiles = data["non grid tiles"]
         self.resources = {}
         self.camera_x = 0
@@ -508,7 +619,7 @@ class Map:
         self.resources["stone"] = utils.load_images("graph/resources/stone", self.scale, color_key=(0, 0, 0))
         self.background = utils.load_image("background.png", 2.2)
         self.menu = menu.Main_Menu(self)
-        self.death_menu = menu.Death_Menu(self)
+        self.death_menu = menu.Death_Menu()
         f.close()
     def render(self, screen, camera_x, camera_y, events):
         if share.state == "menu":
@@ -539,6 +650,19 @@ class Map:
                 if self.grid_tiles[i]["variant"] == 1:
                     del self.grid_tiles[i]
                     yield i[0] * self.tile_size, i[1] * self.tile_size
+    def check_for_collision(self):
+        for p in projectile.projectiles.copy():
+            for tile_coords in self.grid_tiles:
+                if p.get_hitbox().colliderect(tile_coords[0]*self.tile_size, tile_coords[1]*self.tile_size, self.tile_size, self.tile_size):
+                    projectile.projectiles.remove(p)
+    def check_for_fall(self, foot_x, foot_y, dir):
+        if dir == "right":
+            if ((foot_x + 20) // self.tile_size, foot_y // self.tile_size) in self.grid_tiles:
+                return False
+        else:
+            if ((foot_x - 20) // self.tile_size, foot_y // self.tile_size) in self.grid_tiles:
+                return False
+        return True
 
  #menu.py
 
@@ -547,17 +671,23 @@ from scripts import button, share
 
 pygame.init()
 
-def switch_to_game(level_map):
-    share.state = "game"
+def switch_state(state):
+    share.state = state
     share.player.health = 100
-    print(0)
+
+def switch_level(level_num):
+    if level_num <= share.unlocked_levels - 1:
+        share.level_num = level_num
+        share.respawn()
 
 class Main_Menu:
     def __init__(self, level_map):
         self.sky = (200, 20, 70)
-        self.play_button = button.Button((350, 650, 300, 120), "Play", (180, 180, 180), (200, 200, 200), pygame.font.Font("Swamp Ninja.ttf", 32))
-        self.buttons = [self.play_button]
-        self.play_button.slot = lambda:switch_to_game(level_map)
+        self.play_button = button.Button((350, 650, 300, 120), "Play", (110, 110, 255), (200, 200, 200), pygame.font.Font("Swamp Ninja.ttf", 32))
+        self.play_button.slot = lambda:switch_state("game")
+        self.level_button = button.Button((700, 400, 170, 90), "levels", "blue", (60, 255, 100), pygame.font.Font("Swamp Ninja.ttf", 32))
+        self.level_button.slot = share.switch_to_lvl
+        self.buttons = [self.play_button, self.level_button]
     def render(self, screen):
         screen.fill(self.sky)
         pygame.draw.circle(screen, (210, 210, 210), (970, 30), 20)
@@ -569,12 +699,14 @@ class Main_Menu:
             i.update(events)
 
 class Death_Menu(Main_Menu):
-    def __init__(self, level_map):
+    def __init__(self):
         self.font = pygame.font.Font("Swamp Ninja.ttf", 32)
         self.play_again_button = button.Button((350, 650, 300, 120), "Respawn", (255, 20, 40), (30, 255, 57), self.font)
         self.play_again_button.slot = share.respawn
+        self.back_to_menu = button.Button((700, 270, 140, 60), "back to menu", (0, 255, 0), (0, 0, 255), self.font)
+        self.back_to_menu.slot = lambda:switch_state("menu")
         self.buttons:list[button.Button] = []
-        self.buttons.append(self.play_again_button)
+        self.buttons.extend([self.play_again_button, self.back_to_menu])
         self.sky = (200, 20, 70)
     def render(self, screen:pygame.Surface):
         super().render(screen)
@@ -584,6 +716,31 @@ class Death_Menu(Main_Menu):
         for i in self.buttons:
             i.update(events)
 
+class Level_Choosing_Menu:
+    def __init__(self):
+        self.level_buttons:list[button.Button] = []
+        x, y = 30, 30
+        print(share.level_num, "new")
+        for i in range(3):
+            b = button.Button((x, y, 50, 50), f"lvl {i}", (255, 255, 255), ((0, 255, 0) if share.level_num > i else ((255, 0, 0) if share.level_num < i else (0, 0, 255))), pygame.font.Font("Swamp Ninja.ttf", 10))
+            self.level_buttons.append(b)
+            b.slot = lambda level_num = i :switch_level(level_num)
+            x += 80
+        back_button = button.Button((800, 50, 100, 40), "back", (0, 255, 100), (255, 0, 0), pygame.font.Font("Swamp Ninja.ttf", 30))
+        self.level_buttons.append(back_button)
+        back_button.slot = lambda:switch_state("menu")
+    def render(self, screen):
+        for i in self.level_buttons:
+            i.render(screen)
+    def update(self, events):
+        for i in self.level_buttons:
+            i.update(events)
+
+class Pause_Menu:
+    def __init__(self):
+        button_back_to_menu = button.Button((400, 300, 140, 70), "back to menu", (0, 255, 0), (50, 50, 50), pygame.font.Font("Swamp Ninja.ttf", 18))
+        button_back_to_game = button.Button((400, 400, 140, 70), "back", (255, 0, 0), (50, 50, 50), pygame.font.Font("Swamp Ninja.ttf", 18))
+
  #physics.py
 
 ground = 800
@@ -592,8 +749,11 @@ gravity = 0.3
 
  #player.py
 
-from scripts import animation, physics, share
-import pygame
+from scripts import animation, physics, share, projectile
+import pygame, random
+
+
+
 class Player:
     def __init__(self, coords, grid_tiles):
         self.dir = "right"
@@ -617,6 +777,7 @@ class Player:
         self.health = 100
         self.energy = 100
         self.timer = 0
+        self.time_in_air = 0
     
     def render(self, screen, camera_x, camera_y):
         healh_bar = pygame.Rect(10, 10, self.health * 2, 20)
@@ -629,6 +790,10 @@ class Player:
         pygame.draw.rect(screen, (0, 0, 0), (10, 50, 100 * 2, 20))
         pygame.draw.rect(screen, (45, 114, 255), energy_bar)
         pygame.draw.rect(screen, (0, 0, 0), (5, 45, 210, 30), 5)
+    
+    def get_hitbox(self):
+        hitbox = pygame.Rect(self.x, self.y, 42, 54).inflate(-20, 0)
+        return hitbox
     
     def normal_update(self, tile_size):
         global jumps_done
@@ -661,10 +826,16 @@ class Player:
             self.state = "idle"
         if self.in_the_air == True:
             self.state = "jump"
+            self.time_in_air += 1
         if self.in_the_air == False:
             self.jumps_done = 0
-        if self.in_the_air and self.colliding:
+            self.time_in_air = 0
+        if (self.in_the_air and self.colliding) and ((self.dir == "right" and self.coll_right) or (self.dir == "left" and self.coll_left)):
             self.state = "wall slide"
+            self.time_in_air = 0
+        if self.time_in_air > 300:
+            self.health = 0
+
     
     def attack_update(self, tile_size):
         if self.dir == "right":
@@ -683,6 +854,8 @@ class Player:
             else:  
                 self.state = "idle"
                 self.energy = 0
+        self.time_in_air = 0
+        
 
     def update(self, tile_size):
         if self.state == "slide attack":
@@ -690,6 +863,8 @@ class Player:
             self.timer -= 1
             if self.timer == 0:
                 self.state = "idle"
+            for i in range(random.randint(1, 3)):
+                projectile.particles.append(projectile.Particle((self.x - 8, self.y + 40) if self.dir == "right" else (self.x + 40, self.y + 40), "left" if self.dir == "right" else "right", (120, 120, 255)))
         else:
             self.normal_update(tile_size)
             if self.energy < 100:
@@ -698,6 +873,7 @@ class Player:
     def check_for_death(self, level):
         if self.health <= 0:
             share.state = "death menu"
+            
 
     def collision_x(self, tile_size, dx):
         self.coll_right = False
@@ -720,6 +896,8 @@ class Player:
                     else:
                         self.x = tile_hitbox.x + tile_size - 10
                     self.colliding = True
+                    if self.state == "slide attack":
+                        self.timer = 1
     
     def collsion_y(self, tile_size):
         for i in self.grid_tiles:
@@ -778,6 +956,11 @@ import math
 import random
 from scripts import utils
 
+pygame.mixer.music.load("sounds/hit.wav")
+pygame.mixer.music.play(-1)
+hit_sound = pygame.mixer.Sound("sounds/hit.wav")
+hit_sound.set_volume(1)
+
 projectile = utils.load_image("graph/images/projectile.png", 3, color_key=(0, 0, 0))
 class Projectile:
     def __init__(self, coords, dir):
@@ -791,17 +974,24 @@ class Projectile:
             self.x += 12
         else:
             self.x -= 12
-    def if_hit(self, player, camera_x, camera_y, dir):
-        if pygame.Rect(self.x - camera_x, self.y - camera_y, 24, 12).colliderect(pygame.Rect(player.x - camera_x, player.y - camera_y, 42, 54)):
+    def if_hit(self, player, dir):
+        if self.get_hitbox().colliderect(pygame.Rect(player.x, player.y, 42, 54)):
             player.health -= 10
             projectiles.remove(self)
+            hit_sound.play()
             for i in range(5):
-                particles.append(Particle((player.x + 42 - camera_x, player.y + 40 - camera_y), dir))
+                particles.append(Particle((player.x + 42, player.y + 40), dir))
+                return True
+
+    def get_hitbox(self):
+        hitbox = pygame.Rect(self.x, self.y, projectile.get_width(), projectile.get_height())
+        return hitbox
 
 class Particle:
-    def __init__(self, coords, dir):
+    def __init__(self, coords, dir, color="red"):
         self.x = coords[0]
         self.y = coords[1]
+        self.color = color
         if dir == "right":
             self.angle = random.randint(-90, 90) * (math.pi/180)
             self.v = 3
@@ -814,8 +1004,7 @@ class Particle:
             self.vy = self.v * math.sin(self.angle)
         self.timer = 210
     def render(self, screen, camera_x, camera_y):
-        pygame.draw.circle(screen, (255, 0, 0), (self.x - camera_x, self.y - camera_y), 300)
-        print(self.x, self.y)
+        pygame.draw.circle(screen, self.color, (self.x - camera_x, self.y - camera_y), 3)
     def update(self):
         self.x += self.vx
         self.y += self.vy
@@ -824,7 +1013,7 @@ class Particle:
             particles.remove(self)
         self.timer -= 1
 
-projectiles = []
+projectiles:list[Projectile] = []
 particles = []
 
  #share.py
@@ -838,7 +1027,7 @@ import os
 
 pygame.init()
 def load_image(image_path, scale=None, size=None, color_key=None):
-    image = pygame.image.load(image_path).convert_alpha()
+    image = pygame.image.load(image_path).convert()
     if size == None:
         scaled_image = pygame.transform.scale(image, (image.get_width() * scale, image.get_height() * scale))
     else:
